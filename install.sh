@@ -44,8 +44,6 @@ fi
 if [ ! -f "$ZEROCLAW_DIR/config.toml" ]; then
     echo ""
     echo "🔧 Running zeroclaw onboard..."
-    echo "   (Follow the prompts to set up API key, provider, and channel)"
-    echo ""
     zeroclaw onboard
     echo ""
 fi
@@ -68,60 +66,28 @@ else
     echo "   (no skills to install)"
 fi
 
-# ── Helper: parse template, prompt for variables, append ──────────────────
-apply_template() {
-    local TEMPLATE="$1"
-    local TARGET="$2"
-    local MARKER="$3"  # grep marker to check if already appended
+# ── Step 4: Append extra config from templates ────────────────────────────
+for TEMPLATE in "$SCRIPT_DIR"/templates/*.append; do
+    [ -f "$TEMPLATE" ] || continue
+    BASENAME=$(basename "$TEMPLATE" .append)
+    TARGET="$ZEROCLAW_DIR/$BASENAME"
 
-    if [ ! -f "$TEMPLATE" ]; then
-        return
+    # Determine marker (first [section] header in template)
+    MARKER=$(grep -m1 '^\[' "$TEMPLATE" 2>/dev/null || true)
+    if [ -n "$MARKER" ] && grep -qF "$MARKER" "$TARGET" 2>/dev/null; then
+        echo "⚙️  $BASENAME: already has $MARKER (skipped)"
+        continue
     fi
 
-    # Skip if already applied
-    if [ -n "$MARKER" ] && grep -q "$MARKER" "$TARGET" 2>/dev/null; then
-        echo "   ✅ $(basename "$TEMPLATE") already applied (skipped)"
-        return
-    fi
-
-    # Extract unique {{VARIABLE}} names from template
-    local VARS
-    VARS=$(grep -oE '\{\{[A-Z_]+\}\}' "$TEMPLATE" | sort -u | sed 's/[{}]//g')
-
-    if [ -z "$VARS" ]; then
-        # No variables — just append as-is
-        cat "$TEMPLATE" >> "$TARGET"
-        echo "   ✅ $(basename "$TEMPLATE") appended"
-        return
-    fi
-
-    # Prompt for each variable
-    local CONTENT
-    CONTENT=$(cat "$TEMPLATE")
-    echo ""
-    for VAR in $VARS; do
-        local PROMPT_NAME
-        PROMPT_NAME=$(echo "$VAR" | tr '_' ' ' | tr '[:upper:]' '[:lower:]')
-        read -p "   $PROMPT_NAME ($VAR): " VALUE
-        CONTENT=$(echo "$CONTENT" | sed "s|{{${VAR}}}|${VALUE}|g")
-    done
-
-    echo "$CONTENT" >> "$TARGET"
-    echo "   ✅ $(basename "$TEMPLATE") appended"
-}
-
-# ── Step 4: Append to USER.md ─────────────────────────────────────────────
-if [ -f "$WORKSPACE_DIR/USER.md" ]; then
-    echo "📝 Checking USER.md extras..."
-    apply_template "$SCRIPT_DIR/templates/USER.md.append" "$WORKSPACE_DIR/USER.md" "## Google"
-fi
-
-# ── Step 5: Append to config.toml ─────────────────────────────────────────
-echo "⚙️  Checking config.toml extras..."
-apply_template "$SCRIPT_DIR/templates/config.toml.append" "$ZEROCLAW_DIR/config.toml" "[a2ui]"
+    cat "$TEMPLATE" >> "$TARGET"
+    echo "⚙️  $BASENAME: appended from $(basename "$TEMPLATE")"
+done
 
 echo ""
 echo "🎉 Done! To start Lisa:"
 echo ""
 echo "   GEMINI_API_KEY=\"your-api-key\" zeroclaw daemon"
+echo ""
+echo "💡 Lisa will ask for Google account, calendar IDs, etc."
+echo "   when you first use those features."
 echo ""
