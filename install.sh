@@ -60,70 +60,65 @@ echo "   ✅ SOUL.md, IDENTITY.md, AGENTS.md"
 # ── Step 3: Copy skills ──────────────────────────────────────────────────
 echo "📁 Installing skills..."
 mkdir -p "$WORKSPACE_DIR/skills"
-cp -r "$SCRIPT_DIR/workspace/skills/"* "$WORKSPACE_DIR/skills/"
-SKILL_LIST=$(ls "$SCRIPT_DIR/workspace/skills/" | tr '\n' ', ' | sed 's/,$//')
-echo "   ✅ $SKILL_LIST"
-
-# ── Step 4: Append extra fields to USER.md if not already present ─────────
-if [ -f "$WORKSPACE_DIR/USER.md" ] && ! grep -q "## Google" "$WORKSPACE_DIR/USER.md" 2>/dev/null; then
-    echo ""
-    echo "👤 Adding Google/service config to USER.md..."
-    read -p "   Google account email: " GOOGLE_ACCOUNT
-    read -p "   GOG keyring password: " GOG_KEYRING_PASSWORD
-    read -p "   Location (e.g. Seoul Gangseo-gu): " LOCATION
-    read -p "   Latitude (e.g. 37.55): " LATITUDE
-    read -p "   Longitude (e.g. 126.85): " LONGITUDE
-    read -p "   Google Tasks list ID (Enter to skip): " TASKS_LIST_ID
-
-    cat >> "$WORKSPACE_DIR/USER.md" << EOF
-
-## Google
-
-- **Account:** ${GOOGLE_ACCOUNT}
-- **GOG_KEYRING_PASSWORD:** ${GOG_KEYRING_PASSWORD}
-
-## Location
-
-- **Location:** ${LOCATION}
-- **Latitude:** ${LATITUDE}
-- **Longitude:** ${LONGITUDE}
-
-## Calendars
-
-Add your calendar IDs here:
-
-| Name | ID | Notes |
-|------|----|-------|
-| Primary | ${GOOGLE_ACCOUNT} | Personal |
-
-## Google Tasks
-
-- **List ID:** ${TASKS_LIST_ID}
-EOF
-    echo "   ✅ USER.md updated"
+if [ -d "$SCRIPT_DIR/workspace/skills" ] && [ "$(ls -A "$SCRIPT_DIR/workspace/skills")" ]; then
+    cp -r "$SCRIPT_DIR/workspace/skills/"* "$WORKSPACE_DIR/skills/"
+    SKILL_LIST=$(ls "$SCRIPT_DIR/workspace/skills/" | tr '\n' ', ' | sed 's/,$//')
+    echo "   ✅ $SKILL_LIST"
 else
-    echo "✅ USER.md already has Google config (skipped)"
+    echo "   (no skills to install)"
 fi
 
-# ── Step 5: Append extra config.toml sections if not present ──────────────
-if ! grep -q "\[a2ui\]" "$ZEROCLAW_DIR/config.toml" 2>/dev/null; then
-    echo "⚙️  Adding extra config sections..."
-    cat >> "$ZEROCLAW_DIR/config.toml" << 'EOF'
+# ── Helper: parse template, prompt for variables, append ──────────────────
+apply_template() {
+    local TEMPLATE="$1"
+    local TARGET="$2"
+    local MARKER="$3"  # grep marker to check if already appended
 
-[a2ui]
-enabled = true
+    if [ ! -f "$TEMPLATE" ]; then
+        return
+    fi
 
-[web_fetch]
-enabled = true
-provider = "nanohtml2text"
-allowed_domains = ["*"]
+    # Skip if already applied
+    if [ -n "$MARKER" ] && grep -q "$MARKER" "$TARGET" 2>/dev/null; then
+        echo "   ✅ $(basename "$TEMPLATE") already applied (skipped)"
+        return
+    fi
 
-[web_search]
-enabled = true
-provider = "duckduckgo"
-EOF
-    echo "   ✅ a2ui, web_fetch, web_search added to config.toml"
+    # Extract unique {{VARIABLE}} names from template
+    local VARS
+    VARS=$(grep -oE '\{\{[A-Z_]+\}\}' "$TEMPLATE" | sort -u | sed 's/[{}]//g')
+
+    if [ -z "$VARS" ]; then
+        # No variables — just append as-is
+        cat "$TEMPLATE" >> "$TARGET"
+        echo "   ✅ $(basename "$TEMPLATE") appended"
+        return
+    fi
+
+    # Prompt for each variable
+    local CONTENT
+    CONTENT=$(cat "$TEMPLATE")
+    echo ""
+    for VAR in $VARS; do
+        local PROMPT_NAME
+        PROMPT_NAME=$(echo "$VAR" | tr '_' ' ' | tr '[:upper:]' '[:lower:]')
+        read -p "   $PROMPT_NAME ($VAR): " VALUE
+        CONTENT=$(echo "$CONTENT" | sed "s|{{${VAR}}}|${VALUE}|g")
+    done
+
+    echo "$CONTENT" >> "$TARGET"
+    echo "   ✅ $(basename "$TEMPLATE") appended"
+}
+
+# ── Step 4: Append to USER.md ─────────────────────────────────────────────
+if [ -f "$WORKSPACE_DIR/USER.md" ]; then
+    echo "📝 Checking USER.md extras..."
+    apply_template "$SCRIPT_DIR/templates/USER.md.append" "$WORKSPACE_DIR/USER.md" "## Google"
 fi
+
+# ── Step 5: Append to config.toml ─────────────────────────────────────────
+echo "⚙️  Checking config.toml extras..."
+apply_template "$SCRIPT_DIR/templates/config.toml.append" "$ZEROCLAW_DIR/config.toml" "[a2ui]"
 
 echo ""
 echo "🎉 Done! To start Lisa:"
