@@ -19,21 +19,31 @@ cd ../lisa-config
 ./lisa-onboard.sh --source ../lisa
 ```
 
+### 테스트 (기존 환경 안 건드림)
+
+```bash
+ZEROCLAW_DIR=/tmp/lisa-test ./lisa-onboard.sh
+```
+
 ## lisa-onboard.sh 동작
 
-1. `zeroclaw onboard` (config.toml, USER.md 등 기본 생성)
+1. `zeroclaw onboard` (기본 설정)
 2. SOUL.md, IDENTITY.md, AGENTS.md → 리사 버전으로 덮어쓰기
-3. skills/ 복사
-4. config.toml에 추가 설정 append (a2ui, web_fetch 등)
-5. 위치, Google 계정, 캘린더, Tasks → USER.md에 append
+3. 스킬 선택 UI → 선택한 스킬만 설치
+4. 스킬별 `onboard.conf` 파싱:
+   - `[requires]` → CLI 의존성 설치 (OS별 분기)
+   - `[user]` → 개인 설정 → USER.md에 append
+   - `[config]` → config.toml에 append
 
-## 구조
+## 스킬 추가 시
 
 ```
-workspace/          관리자 설정 (SOUL, IDENTITY, AGENTS, skills)
-templates/          onboard 이후 추가 config 항목
-lisa-onboard.sh     설치 + 개인 설정
+workspace/skills/새스킬/
+├── SKILL.md         ← OpenClaw 기반 (원본 유지)
+└── onboard.conf     ← [requires] [user] [config]
 ```
+
+lisa-onboard.sh 수정 불필요.
 
 ## 실행
 

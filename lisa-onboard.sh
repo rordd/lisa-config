@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-ZEROCLAW_DIR="$HOME/.zeroclaw"
+ZEROCLAW_DIR="${ZEROCLAW_DIR:-$HOME/.zeroclaw}"
 WORKSPACE_DIR="$ZEROCLAW_DIR/workspace"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILLS_DIR="$SCRIPT_DIR/workspace/skills"
@@ -166,9 +166,10 @@ for SKILL_NAME in "${SELECTED_SKILLS[@]}"; do
                 fi
                 ;;
             config)
-                if ! grep -qF "$KEY" "$ZEROCLAW_DIR/config.toml" 2>/dev/null; then
-                    echo "$VAL" >> "$ZEROCLAW_DIR/config.toml"
-                    echo "   ⚙️  config.toml: added $KEY"
+                # Lines under [config] are appended as-is to config.toml
+                # Use first [section] line as duplicate marker
+                if ! grep -qF "$LINE" "$ZEROCLAW_DIR/config.toml" 2>/dev/null; then
+                    echo "$LINE" >> "$ZEROCLAW_DIR/config.toml"
                 fi
                 ;;
         esac
@@ -207,21 +208,6 @@ if [ ${#USER_VARS[@]} -gt 0 ] && [ -f "$WORKSPACE_DIR/USER.md" ]; then
         echo "✅ USER.md already configured (skipped)"
     fi
 fi
-
-# ── Step 6: Append extra config from templates ────────────────────────────
-for TEMPLATE in "$SCRIPT_DIR"/templates/*.append; do
-    [ -f "$TEMPLATE" ] || continue
-    BASENAME=$(basename "$TEMPLATE" .append)
-    TARGET="$ZEROCLAW_DIR/$BASENAME"
-
-    MARKER=$(grep -m1 '^\[' "$TEMPLATE" 2>/dev/null || true)
-    if [ -n "$MARKER" ] && grep -qF "$MARKER" "$TARGET" 2>/dev/null; then
-        continue
-    fi
-
-    cat "$TEMPLATE" >> "$TARGET"
-    echo "   ⚙️  $BASENAME: appended from $(basename "$TEMPLATE")"
-done
 
 echo ""
 echo "🎉 Lisa onboard complete!"
