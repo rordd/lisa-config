@@ -135,14 +135,28 @@ for SKILL_NAME in "${SELECTED_SKILLS[@]}"; do
 
         case "$SECTION" in
             requires)
-                if ! command -v "$KEY" &>/dev/null && [ -z "${INSTALLED_BINS[$KEY]}" ]; then
+                # Parse OS-specific keys: bin.darwin, bin.linux, or plain bin
+                BIN="$KEY"
+                OS_SUFFIX=""
+                if [[ "$KEY" == *.* ]]; then
+                    BIN="${KEY%%.*}"
+                    OS_SUFFIX="${KEY#*.}"
+                fi
+
+                # Skip if wrong OS
+                CURRENT_OS=$(uname -s | tr '[:upper:]' '[:lower:]')  # darwin or linux
+                if [ -n "$OS_SUFFIX" ] && [ "$OS_SUFFIX" != "$CURRENT_OS" ]; then
+                    continue
+                fi
+
+                if ! command -v "$BIN" &>/dev/null && [ -z "${INSTALLED_BINS[$BIN]}" ]; then
                     echo ""
-                    echo "   ⚠️  $SKILL_NAME requires '$KEY' but it's not installed."
+                    echo "   ⚠️  $SKILL_NAME requires '$BIN' but it's not installed."
                     echo "   Install command: $VAL"
                     read -p "   Install now? (Y/n): " DO_INSTALL
                     if [ "$DO_INSTALL" != "n" ] && [ "$DO_INSTALL" != "N" ]; then
                         eval "$VAL"
-                        INSTALLED_BINS[$KEY]=1
+                        INSTALLED_BINS[$BIN]=1
                     fi
                 fi
                 ;;
