@@ -84,6 +84,16 @@ for TEMPLATE in "$SCRIPT_DIR"/templates/*.append; do
 done
 
 echo ""
+
+# ── Step 5: Lisa onboard ─────────────────────────────────────────────────
+if ! grep -q "## Google" "$WORKSPACE_DIR/USER.md" 2>/dev/null; then
+    echo "👤 Running Lisa onboard..."
+    "$SCRIPT_DIR/lisa-onboard.sh"
+else
+    echo "✅ Lisa onboard already completed (skipped)"
+fi
+
+echo ""
 echo "🎉 Done! To start Lisa:"
 echo ""
 echo "   GEMINI_API_KEY=\"your-api-key\" zeroclaw daemon"
