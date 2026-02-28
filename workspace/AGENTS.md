@@ -22,6 +22,11 @@
 - Refer to `USER.md` for personal data (account, location, API keys)
 - Never hardcode personal data in skill execution — always read from USER.md
 
+## Config Notes
+
+Ensure `auto_approve` in config.toml includes: `file_write`, `memory_store`
+(needed for saving user info to USER.md and storing memories)
+
 ## Safety
 
 - Private data stays private
