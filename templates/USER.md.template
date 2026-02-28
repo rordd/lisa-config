@@ -1,0 +1,26 @@
+# USER.md — About Your Human
+
+- **Name:** {{USER_NAME}}
+- **Timezone:** {{TIMEZONE}}
+- **Location:** {{LOCATION}}
+- **Latitude:** {{LATITUDE}}
+- **Longitude:** {{LONGITUDE}}
+
+## Google
+
+- **Account:** {{GOOGLE_ACCOUNT}}
+- **GOG_KEYRING_PASSWORD:** {{GOG_KEYRING_PASSWORD}}
+
+## Calendars
+
+| Name | ID | Notes |
+|------|----|-------|
+| Primary | {{GOOGLE_ACCOUNT}} | Personal |
+
+## Google Tasks
+
+- **List ID:** {{TASKS_LIST_ID}}
+
+## Notes
+
+Add any personal context here.
