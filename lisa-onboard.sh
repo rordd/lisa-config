@@ -49,6 +49,18 @@ if [ ! -f "$ZEROCLAW_DIR/config.toml" ]; then
     echo ""
 fi
 
+# ── Step 1.5: Append base config ──────────────────────────────────────────
+BASE_TEMPLATE="$SCRIPT_DIR/templates/config.toml.append"
+if [ -f "$BASE_TEMPLATE" ]; then
+    echo "⚙️  Applying base config..."
+    while IFS= read -r LINE || [ -n "$LINE" ]; do
+        if ! grep -qF "$LINE" "$ZEROCLAW_DIR/config.toml" 2>/dev/null; then
+            echo "$LINE" >> "$ZEROCLAW_DIR/config.toml"
+        fi
+    done < "$BASE_TEMPLATE"
+    echo "   ✅ Base config applied"
+fi
+
 # ── Step 2: Overwrite managed workspace files ─────────────────────────────
 echo "📁 Installing Lisa personality..."
 cp "$SCRIPT_DIR/workspace/SOUL.md" "$WORKSPACE_DIR/SOUL.md"
