@@ -49,24 +49,22 @@ if [ ! -f "$ZEROCLAW_DIR/config.toml" ]; then
     echo ""
 fi
 
-# ── Step 1.5: Append base config ──────────────────────────────────────────
-BASE_TEMPLATE="$SCRIPT_DIR/templates/config.toml.append"
-if [ -f "$BASE_TEMPLATE" ]; then
-    echo "⚙️  Applying base config..."
-    while IFS= read -r LINE || [ -n "$LINE" ]; do
-        if ! grep -qF "$LINE" "$ZEROCLAW_DIR/config.toml" 2>/dev/null; then
-            echo "$LINE" >> "$ZEROCLAW_DIR/config.toml"
-        fi
-    done < "$BASE_TEMPLATE"
-    echo "   ✅ Base config applied"
+# ── Step 1.5: Symlink config.override.toml ────────────────────────────────
+OVERRIDE_SRC="$SCRIPT_DIR/config.override.toml"
+OVERRIDE_DST="$ZEROCLAW_DIR/config.override.toml"
+if [ -f "$OVERRIDE_SRC" ]; then
+    echo "⚙️  Linking config.override.toml..."
+    ln -sf "$OVERRIDE_SRC" "$OVERRIDE_DST"
+    echo "   ✅ $OVERRIDE_DST → $OVERRIDE_SRC"
 fi
 
-# ── Step 2: Overwrite managed workspace files ─────────────────────────────
-echo "📁 Installing Lisa personality..."
-cp "$SCRIPT_DIR/workspace/SOUL.md" "$WORKSPACE_DIR/SOUL.md"
-cp "$SCRIPT_DIR/workspace/IDENTITY.md" "$WORKSPACE_DIR/IDENTITY.md"
-cp "$SCRIPT_DIR/workspace/AGENTS.md" "$WORKSPACE_DIR/AGENTS.md"
-echo "   ✅ SOUL.md, IDENTITY.md, AGENTS.md"
+# ── Step 2: Symlink managed workspace files ───────────────────────────────
+echo "📁 Linking Lisa personality..."
+for FILE in SOUL.md IDENTITY.md AGENTS.md; do
+    rm -f "$WORKSPACE_DIR/$FILE"
+    ln -sf "$SCRIPT_DIR/workspace/$FILE" "$WORKSPACE_DIR/$FILE"
+done
+echo "   ✅ SOUL.md, IDENTITY.md, AGENTS.md (symlinked)"
 
 # ── Step 3: Skill selection ───────────────────────────────────────────────
 echo ""
@@ -122,11 +120,10 @@ for SKILL_NAME in "${SELECTED_SKILLS[@]}"; do
     SKILL_SRC="$SKILLS_DIR/$SKILL_NAME"
     CONF="$SKILL_SRC/onboard.conf"
 
-    # Copy skill
-    mkdir -p "$WORKSPACE_DIR/skills/$SKILL_NAME"
-    cp "$SKILL_SRC/SKILL.md" "$WORKSPACE_DIR/skills/$SKILL_NAME/"
-    [ -f "$CONF" ] && cp "$CONF" "$WORKSPACE_DIR/skills/$SKILL_NAME/"
-    echo "   📦 $SKILL_NAME installed"
+    # Symlink skill directory
+    rm -rf "$WORKSPACE_DIR/skills/$SKILL_NAME"
+    ln -sf "$SKILL_SRC" "$WORKSPACE_DIR/skills/$SKILL_NAME"
+    echo "   📦 $SKILL_NAME linked"
 
     # Parse onboard.conf if exists
     [ -f "$CONF" ] || continue
