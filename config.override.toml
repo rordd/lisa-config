@@ -1,0 +1,51 @@
+# Lisa config overrides — merged on top of base config.toml
+# Only values that differ from upstream defaults go here.
+
+[skills]
+prompt_injection_mode = "compact"
+
+[autonomy]
+auto_approve = [
+    "file_read",
+    "memory_recall",
+    "web_fetch",
+    "web_search",
+    "web_search_tool",
+    "skills",
+    "shell",
+    "canvas",
+]
+allowed_commands = [
+    "git",
+    "npm",
+    "cargo",
+    "ls",
+    "cat",
+    "grep",
+    "find",
+    "echo",
+    "pwd",
+    "wc",
+    "head",
+    "tail",
+    "date",
+    "gog",
+    "memo",
+    "remindctl",
+    "jq",
+    "python3",
+    "bash",
+]
+
+[web_fetch]
+enabled = true
+provider = "nanohtml2text"
+
+[web_search]
+enabled = true
+
+[gateway]
+require_pairing = false
+
+[a2ui]
+enabled = true

@@ -1,8 +1,0 @@
-[web_fetch]
-enabled = true
-provider = "nanohtml2text"
-allowed_domains = ["*"]
-
-[web_search]
-enabled = true
-provider = "duckduckgo"

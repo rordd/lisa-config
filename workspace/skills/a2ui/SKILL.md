@@ -1,7 +1,7 @@
 ---
 name: a2ui
 description: "Render rich UI cards on the web dashboard using the `canvas` tool. Use for weather, calendar, tasks, news, lists, settings — any response that benefits from visual layout."
-always: true
+always: false
 ---
 
 # A2UI Skill — Canvas Tool
